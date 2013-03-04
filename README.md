@@ -1,0 +1,4 @@
+spoj-judge
+==========
+
+SPOJ Judge
