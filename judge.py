@@ -1,3 +1,4 @@
+import itertools
 import os
 import sqlite3
 import sys
@@ -223,14 +224,13 @@ def ranking_grid(conn):
 	return grid
 
 def grid_to_string(grid):
-	lines = []
-	lines.append(str(len(grid[0])))
-	lines += grid[0]
-	lines.append(str(len(grid[1:])))
-	for line in grid[1:]:
-		lines += line
-	lines.append('')
-	return '\n'.join(lines)
+	return '\n'.join(itertools.chain(
+		(str(len(grid[0])),),
+		grid[0],
+		(str(len(grid[1:])),),
+		(element for row in grid[1:] for element in row),
+		(str(),)
+	))
 
 if __name__ == '__main__':
 	conn = create_db()
