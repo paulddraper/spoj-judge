@@ -65,7 +65,7 @@ def create_db():
 
 def load_db(conn, input):
 	next = lambda: input.readline().replace('\n','')
-	
+
 	insert_values_sql = lambda table, n_fields: (
 			'insert into {0} values ({1})'
 			.format(table, ','.join(['?']*n_fields))
@@ -105,6 +105,7 @@ def load_db(conn, input):
 	conn.executemany(insert_values_sql('status', 2), records)
 
 def calc_stats(conn):
+	#user_problem
 	conn.execute('''create table user_problem as
 		select
 			u.id user_id
@@ -127,6 +128,8 @@ def calc_stats(conn):
 			where user_problem.user_id = s.user_id and user_problem.problem_id = s.problem_id
 		)
 	''')
+	
+	#user
 	conn.execute('''alter table user add column score integer''')
 	conn.execute('''alter table user add column last_soonest integer''')
 	conn.execute('''alter table user add column rank integer''')
@@ -144,14 +147,15 @@ def calc_stats(conn):
 		set rank = 1 + (select count(*) from user u where u.score > user.score)
 	''')
 
-def timeGrid(conn):
+def time_grid(conn):
 	date = conn.execute('''select now from contest''').fetchone()['now']
-	s = ('Ranking last updated '
+	s = (
+		'Ranking last updated '
 		'<script>document.write(new Date({utc}*1000).toLocaleString());</script>'
-		).format(utc=time.mktime(date.timetuple()))
+	).format(utc=time.mktime(date.timetuple()))
 	return [[s]]
 
-def rankingGrid(conn):
+def ranking_grid(conn):
 	grid = []
 
 	contest = conn.execute('''select code from contest''').fetchone()
@@ -160,9 +164,9 @@ def rankingGrid(conn):
 	row.append('Rank')
 	row.append('Name')
 	row += (
-		('<a href="/{c[code]}/problems/{p[code]}/">'
+		'<a href="/{c[code]}/problems/{p[code]}/">'
 			'<font title="{p[name]}">{p[code]}</font>'
-		'</a>').format(c=contest, p=problem)
+		'</a>'.format(c=contest, p=problem)
 		for problem
 		in conn.execute('''select code, name from problem order by id''')
 	)
@@ -176,7 +180,10 @@ def rankingGrid(conn):
 
 		row = []
 		row.append('{u[rank]}'.format(u=user))
-		row.append('<a href="/{c[code]}/users/{u[username]}/">{u[name]}</a>'.format(c=contest, u=user))
+		row.append(
+			'<a href="/{c[code]}/users/{u[username]}/">{u[name]}</a>'
+			.format(c=contest, u=user)
+		)
 		for user_problem in conn.execute('''
 				select p.code, pt.name type_name, up.best, up.fastest, up.soonest, up.incorrect
 				from problem p
@@ -191,20 +198,22 @@ def rankingGrid(conn):
 				else:
 					best_display = '{up[best]:.0f}'.format(up=user_problem)
 				row.append(
-					('<a href="/{c[code]}/status/{up[code]},{u[username]}/">'
+					'<a href="/{c[code]}/status/{up[code]},{u[username]}/">'
 						'<script>'
 							'var d = new Date({up[soonest]}*1000);'
-							'document.write((d.getMonth()+1)+"/"+d.getDate()+"/"+(d.getFullYear()%1000));'
+							'document.write('
+								'd.getMonth()+1 + "/" + d.getDate() + "/" + (d.getFullYear()%1000'
+							');'
 						'</script>'
 						'<br/>'
 						'{best_display}'
 					'</a>'
-					).format(c=contest, u=user, up=user_problem, best_display=best_display)
+					.format(c=contest, u=user, up=user_problem, best_display=best_display)
 				)
 			elif user_problem['incorrect']:
 				row.append(
-					('<a href="/{c[code]}/status/{up[code]},{u[username]}/">({up[incorrect]})</a>'
-					).format(c=contest, u=user, up=user_problem)
+					'<a href="/{c[code]}/status/{up[code]},{u[username]}/">({up[incorrect]})</a>'
+					.format(c=contest, u=user, up=user_problem)
 				)
 			else:
 				row.append('')
@@ -213,7 +222,7 @@ def rankingGrid(conn):
 
 	return grid
 
-def gridToString(grid):
+def grid_to_string(grid):
 	lines = []
 	lines.append(str(len(grid[0])))
 	lines += grid[0]
@@ -234,8 +243,8 @@ if __name__ == '__main__':
 
 	out_file = os.fdopen(6, 'w') if len(sys.argv) == 1 else sys.stdout
 	out_file.write('2\n')
-	out_file.write(gridToString(timeGrid(conn)))
-	out_file.write(gridToString(rankingGrid(conn)))
+	out_file.write(grid_to_string(time_grid(conn)))
+	out_file.write(grid_to_string(ranking_grid(conn)))
 	out_file.close()
 
 	conn.close()
