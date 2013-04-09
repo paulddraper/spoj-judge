@@ -201,7 +201,7 @@ def ranking_grid(conn):
 			if user_problem['seconds']:
 				display += sec_to_str(user_problem['seconds'])
 			if user_problem['incorrect']:
-				display += '<br/>(+{})'.format(20*60*user_problem['incorrect'])
+				display += '<br/>(+{})'.format(60*user_problem['incorrect'])
 			row.append(
 				'<a href="/{c[code]}/status/{up[code]},{u[username]}/">{display}</a>'
 				.format(c=contest, u=user, up=user_problem, display=display)
