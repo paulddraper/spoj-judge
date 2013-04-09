@@ -141,7 +141,7 @@ def calc_stats(conn):
 		)
 		, time_penalty = (
 			select ifnull(sum(case when seconds is not null then seconds end), 0)
-				+ 20 * ifnull(sum(case when seconds is not null then incorrect end), 0)
+				+ 20 * 60 * ifnull(sum(case when seconds is not null then incorrect end), 0)
 			from user_problem up, contest c where up.user_id = user.id
 		)
 	''')
@@ -201,7 +201,7 @@ def ranking_grid(conn):
 			if user_problem['seconds']:
 				display += sec_to_str(user_problem['seconds'])
 			if user_problem['incorrect']:
-				display += '<br/>(+{})'.format(20*user_problem['incorrect'])
+				display += '<br/>(+{})'.format(20*60*user_problem['incorrect'])
 			row.append(
 				'<a href="/{c[code]}/status/{up[code]},{u[username]}/">{display}</a>'
 				.format(c=contest, u=user, up=user_problem, display=display)
